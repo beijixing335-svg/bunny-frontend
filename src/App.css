@@ -1,0 +1,280 @@
+import React, { useState, useRef, useEffect } from "react";
+
+const App = () => {
+  const [sessions, setSessions] = useState([
+    { id: 1, name: "会话 1" },
+    { id: 2, name: "会话 2" },
+  ]);
+  const [currentSessionId, setCurrentSessionId] = useState(1);
+  const [messages, setMessages] = useState([
+    { id: 1, sender: "ai", text: "你好！我是 AI 助手，有什么可以帮你的吗？" },
+    { id: 2, sender: "user", text: "我想了解一下 React。" },
+    { id: 3, sender: "ai", text: "React 是一个用于构建用户界面的 JavaScript 库。" },
+  ]);
+  const [inputText, setInputText] = useState("");
+  const [selectedModel, setSelectedModel] = useState("Claude");
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = () => {
+    if (inputText.trim() === "") return;
+    const newMessage = {
+      id: messages.length + 1,
+      sender: "user",
+      text: inputText,
+    };
+    setMessages([...messages, newMessage]);
+    setInputText("");
+
+    // 模拟 AI 回复
+    setTimeout(() => {
+      const aiReply = {
+        id: messages.length + 2,
+        sender: "ai",
+        text: "这是 AI 的自动回复。",
+      };
+      setMessages((prev) => [...prev, aiReply]);
+    }, 500);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const createNewSession = () => {
+    const newSession = {
+      id: sessions.length + 1,
+      name: `会话 ${sessions.length + 1}`,
+    };
+    setSessions([...sessions, newSession]);
+    setCurrentSessionId(newSession.id);
+    setMessages([]);
+  };
+
+  const switchSession = (id) => {
+    setCurrentSessionId(id);
+    // 实际应用中会加载对应会话的消息，这里重置为示例消息
+    setMessages([
+      { id: 1, sender: "ai", text: `欢迎来到会话 ${id}` },
+    ]);
+  };
+
+  return (
+    <div style={styles.container}>
+      {/* 左侧边栏 */}
+      <div style={styles.sidebar}>
+        <div style={styles.sidebarHeader}>
+          <button style={styles.newSessionBtn} onClick={createNewSession}>
+            + 新建会话
+          </button>
+        </div>
+        <div style={styles.sessionList}>
+          {sessions.map((session) => (
+            <div
+              key={session.id}
+              style={{
+                ...styles.sessionItem,
+                backgroundColor:
+                  currentSessionId === session.id ? "#f9e8e0" : "transparent",
+              }}
+              onClick={() => switchSession(session.id)}
+            >
+              {session.name}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 右侧主区域 */}
+      <div style={styles.mainArea}>
+        {/* 顶部模型选择器 */}
+        <div style={styles.header}>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            style={styles.modelSelect}
+          >
+            <option value="Claude">Claude</option>
+            <option value="DeepSeek">DeepSeek</option>
+          </select>
+        </div>
+
+        {/* 消息列表 */}
+        <div style={styles.messageList}>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              style={{
+                ...styles.messageWrapper,
+                justifyContent: msg.sender === "user" ? "flex-end" : "flex-start",
+              }}
+            >
+              <div
+                style={{
+                  ...styles.messageBubble,
+                  backgroundColor: msg.sender === "user" ? "#e9e5e0" : "#f9e8e0",
+                }}
+              >
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* 底部输入框 */}
+        <div style={styles.inputArea}>
+          <textarea
+            style={styles.inputBox}
+            placeholder="输入消息..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            rows={2}
+          />
+          <button style={styles.sendBtn} onClick={handleSendMessage}>
+            发送
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    display: "flex",
+    height: "100vh",
+    backgroundColor: "#f5f0eb",
+    fontFamily: "sans-serif",
+  },
+  sidebar: {
+    width: "240px",
+    backgroundColor: "#ffffff",
+    borderRight: "1px solid #e0d6ce",
+    display: "flex",
+    flexDirection: "column",
+    padding: "16px",
+    boxSizing: "border-box",
+  },
+  sidebarHeader: {
+    marginBottom: "20px",
+  },
+  newSessionBtn: {
+    width: "100%",
+    padding: "10px 0",
+    backgroundColor: "#f9e8e0",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#4a3f3a",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+  },
+  sessionList: {
+    flex: 1,
+    overflowY: "auto",
+  },
+  sessionItem: {
+    padding: "10px 12px",
+    borderRadius: "8px",
+    marginBottom: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    color: "#4a3f3a",
+    transition: "background-color 0.2s",
+  },
+  mainArea: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "#f5f0eb",
+  },
+  header: {
+    padding: "16px 24px",
+    backgroundColor: "#ffffff",
+    borderBottom: "1px solid #e0d6ce",
+    display: "flex",
+    alignItems: "center",
+  },
+  modelSelect: {
+    padding: "6px 12px",
+    borderRadius: "6px",
+    border: "1px solid #d0c6be",
+    backgroundColor: "#ffffff",
+    fontSize: "14px",
+    color: "#4a3f3a",
+    outline: "none",
+    cursor: "pointer",
+  },
+  messageList: {
+    flex: 1,
+    padding: "20px 24px",
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    backgroundColor: "#f5f0eb",
+  },
+  messageWrapper: {
+    display: "flex",
+    width: "100%",
+  },
+  messageBubble: {
+    maxWidth: "70%",
+    padding: "12px 16px",
+    borderRadius: "16px",
+    fontSize: "15px",
+    lineHeight: "1.5",
+    wordWrap: "break-word",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+  },
+  inputArea: {
+    padding: "16px 24px",
+    backgroundColor: "#ffffff",
+    borderTop: "1px solid #e0d6ce",
+    display: "flex",
+    gap: "12px",
+    alignItems: "flex-end",
+  },
+  inputBox: {
+    flex: 1,
+    padding: "10px 14px",
+    borderRadius: "20px",
+    border: "1px solid #d0c6be",
+    fontSize: "14px",
+    resize: "none",
+    outline: "none",
+    fontFamily: "inherit",
+    backgroundColor: "#faf8f6",
+    transition: "border-color 0.2s",
+    minHeight: "44px",
+    maxHeight: "120px",
+  },
+  sendBtn: {
+    padding: "10px 24px",
+    backgroundColor: "#f9e8e0",
+    border: "none",
+    borderRadius: "20px",
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#4a3f3a",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+    height: "44px",
+    whiteSpace: "nowrap",
+  },
+};
+
+export default App;
